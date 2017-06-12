@@ -11,7 +11,7 @@ This program check response of site and domain experation date.
 3. Put list of URLs to file `sites.txt` in script folder. **URLs must be in each line one by one**!
 
 # Launch example.
-
+Run with default list `sites.txt` (it's in script folder for example)
 ```
 $ python3 check_sites_health.py
 
