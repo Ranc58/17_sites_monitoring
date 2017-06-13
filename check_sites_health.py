@@ -1,8 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+import argparse
 import requests
 import whois
-
-FILEPATH = 'sites.txt'
 
 
 def create_url_list(urls):
@@ -38,11 +37,11 @@ def get_full_info_list(response_list, exp_date_list):
 
 def get_output_urls_info(full_info_list):
     output_info_list = []
-    for list in full_info_list:
-        date_diff = list['exp_date'] - datetime.today()
-        months_diff = int(int(date_diff.days) / 30)
-        site = {'url': list['url'],
-                'response_code': list['response'],
+    for url in full_info_list:
+        date_diff = url['exp_date'] - datetime.today()
+        months_diff = date_diff.days // 30
+        site = {'url': url['url'],
+                'response_code': url['response'],
                 'expiration': months_diff}
         output_info_list.append(site)
     return output_info_list
@@ -50,21 +49,27 @@ def get_output_urls_info(full_info_list):
 
 def print_urls_info(output_info_list):
     for url in output_info_list:
-        print("\nUrl: {}\n"
-              "Server response: {}\n"
-              "To end of domen expiration: {} months"
-              .format(url['url'], url['response_code'], url['expiration']))
+        print("\nUrl: {url}\n"
+              "Server response: {response_code}\n"
+              "To end of domen expiration: {expiration} months"
+              .format(**url))
+
+
+def create_parser_for_user_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--file', help='path to file with list of URLs', type=str)
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
+    namespace = create_parser_for_user_arguments()
+    filepath = namespace.file
     try:
-        with open(FILEPATH) as urls:
+        with open(filepath) as urls:
             url_list = create_url_list(urls)
         response_list = get_server_response(url_list)
-    except FileNotFoundError as error:
+    except (FileNotFoundError, requests.exceptions.ConnectionError) as error:
         print(error)
-    except requests.exceptions.ConnectionError:
-        print('Error! Please check "sites.txt" for correct URLs!')
     else:
         exp_date_list = get_domain_expiration_date(url_list)
         full_info_list = get_full_info_list(response_list, exp_date_list)
